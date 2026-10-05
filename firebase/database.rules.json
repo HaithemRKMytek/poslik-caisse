@@ -1,0 +1,21 @@
+{
+  "rules": {
+    "registers": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && (!data.exists() || data.child('claimedBy').val() === auth.uid)",
+        ".validate": "$code.matches(/^[A-Z0-9]{2,6}$/) && newData.child('claimedBy').val() === auth.uid && newData.child('claimedAt').isNumber()"
+      }
+    },
+    "sales": {
+      "$code": {
+        ".read": "auth != null",
+        ".indexOn": ["createdAt"],
+        "$ticket": {
+          ".write": "auth != null && root.child('registers').child($code).child('claimedBy').val() === auth.uid && newData.exists() && (!data.exists() || data.child('saleId').val() === newData.child('saleId').val())",
+          ".validate": "newData.hasChildren(['saleId', 'registerCode', 'ticketNumber', 'ticketLabel', 'totalMillimes', 'createdAt', 'printStatus', 'lines']) && newData.child('registerCode').val() === $code && newData.child('ticketNumber').isNumber() && newData.child('ticketNumber').val() >= 1 && newData.child('totalMillimes').isNumber() && newData.child('totalMillimes').val() > 0 && newData.child('printStatus').val().matches(/^(PENDING|PRINTED|FAILED)$/)"
+        }
+      }
+    }
+  }
+}

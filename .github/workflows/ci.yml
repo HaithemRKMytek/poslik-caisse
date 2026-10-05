@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Style (ktlint)
+        run: |
+          curl -sSLo ktlint.jar https://repo1.maven.org/maven2/com/pinterest/ktlint/ktlint-cli/1.5.0/ktlint-cli-1.5.0-all.jar
+          java -jar ktlint.jar "**/*.kt" "**/*.kts" "!**/build/**"
+
+      - name: Tests unitaires (domaine JVM, Room via Robolectric, ViewModels)
+        run: ./gradlew test --stacktrace
+
+      - name: Android Lint
+        run: ./gradlew :app:lintDebug
+
+      - name: Build de l'APK debug
+        run: ./gradlew :app:assembleDebug
+
+      - name: Rapports de tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: '**/build/reports/tests/'
+
+      - name: APK debug
+        uses: actions/upload-artifact@v4
+        with:
+          name: poslik-caisse-debug
+          path: app/build/outputs/apk/debug/*.apk
