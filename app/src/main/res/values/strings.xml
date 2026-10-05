@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Poslik Caisse</string>
+
+    <!-- Configuration -->
+    <string name="setup_title">Configurer cette caisse</string>
+    <string name="setup_explanation">Chaque tablette a son propre code caisse. Les tickets sont numérotés par caisse (C01-000001, C01-000002…), ce qui garantit des numéros uniques même hors ligne. Le code est réservé dans Firebase : cette étape nécessite une connexion, une seule fois.</string>
+    <string name="setup_code_label">Code caisse (2 à 6 lettres ou chiffres)</string>
+    <string name="setup_submit">Enregistrer la caisse</string>
+    <string name="setup_error_invalid">Code invalide : 2 à 6 lettres majuscules ou chiffres, par exemple C01.</string>
+    <string name="setup_error_taken">Ce code est déjà utilisé par une autre tablette. Choisissez-en un autre.</string>
+    <string name="setup_error_unavailable">Impossible de réserver le code : %1$s</string>
+
+    <!-- Caisse -->
+    <string name="pos_title">Caisse %1$s</string>
+    <string name="pos_history">Historique</string>
+    <string name="pos_cart">Panier</string>
+    <string name="pos_cart_empty">Touchez un produit pour l\'ajouter au panier.</string>
+    <string name="pos_total">Total</string>
+    <string name="pos_checkout">Encaisser %1$s</string>
+    <string name="pos_last_ticket">Dernier ticket : %1$s</string>
+    <string name="pos_checkout_error">L\'encaissement a échoué : %1$s</string>
+    <string name="pos_add_one">Ajouter un</string>
+    <string name="pos_remove_one">Retirer un</string>
+    <string name="pos_printer_failure">Panne imprimante (démo)</string>
+
+    <!-- Réseau -->
+    <string name="network_offline">Hors ligne : les ventes sont enregistrées et seront synchronisées au retour du réseau.</string>
+    <string name="network_pending">%1$d vente(s) en attente de synchronisation</string>
+    <string name="network_synced">En ligne, tout est synchronisé</string>
+
+    <!-- Historique -->
+    <string name="history_title">Historique des ventes</string>
+    <string name="history_back">Retour à la caisse</string>
+    <string name="history_empty">Aucune vente pour le moment.</string>
+    <string name="history_reprint">Réimprimer</string>
+    <string name="print_pending">En attente</string>
+    <string name="print_printed">Imprimé</string>
+    <string name="print_failed">Échec</string>
+    <string name="sync_pending">À synchroniser</string>
+    <string name="sync_synced">Synchronisé</string>
+    <string name="sync_conflict">Conflit de numéro</string>
+</resources>
