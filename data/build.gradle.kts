@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.room)
 }
 
 android {
@@ -32,8 +33,10 @@ kotlin {
     }
 }
 
-ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
+// Le plugin Room exporte le schéma variante par variante : avec l'argument KSP brut, les
+// variantes debug et release écrivaient le même fichier en parallèle (« Empty schema file »).
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
 dependencies {
