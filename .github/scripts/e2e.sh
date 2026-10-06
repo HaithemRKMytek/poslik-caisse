@@ -29,5 +29,6 @@ fi
 adb pull "/sdcard/Android/data/$APP/files/e2e" "$OUT/captures" || true
 adb logcat -d > "$OUT/logcat.txt" || true
 echo "----- Journal de l'app (synchro, impression, Firebase, plantages) -----"
-grep -E "SyncWorker|FakeTicketPrinter|FirebaseAuth|PersistentConnection|Connection|WebSocket|AuthTokenProvider|AndroidRuntime|FATAL" "$OUT/logcat.txt" | grep -v "WM-" | cut -c1-400 | head -250 || true
+grep -E "SyncWorker|FakeTicketPrinter|FirebaseAuth|PersistentConnection|Connection   |WM-WorkerWrapper|WM-Processor|WM-NetworkStateTracker|ConnectivityService.*(CONNECTED|DISCONNECTED)|AndroidRuntime: FATAL" "$OUT/logcat.txt" \
+  | grep -vE "Sending data|received data|Restoring|keepAlive|FrameCount" | cut -c1-300 | tail -n 300 || true
 exit "$status"

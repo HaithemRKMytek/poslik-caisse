@@ -142,7 +142,10 @@ class CaisseEndToEndTest {
             try {
                 return assertion()
             } catch (e: Throwable) {
-                if (System.currentTimeMillis() > deadline) throw AssertionError("Délai dépassé : $what", e)
+                if (System.currentTimeMillis() > deadline) {
+                    screenshot("echec")
+                    throw AssertionError("Délai dépassé : $what", e)
+                }
                 Thread.sleep(POLL_MILLIS)
             }
         }
