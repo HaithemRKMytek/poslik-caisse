@@ -57,10 +57,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 17 pour Gradle (dernière version listée = version par défaut), 21 pour les émulateurs Firebase.
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: |
+            21
+            17
 
       - uses: gradle/actions/setup-gradle@v4
 
@@ -79,6 +82,7 @@ jobs:
 
       - name: Émulateurs Firebase (Auth + Realtime Database, règles du dépôt)
         run: |
+          export JAVA_HOME="$JAVA_HOME_21_X64" PATH="$JAVA_HOME_21_X64/bin:$PATH"
           npx -y firebase-tools@latest emulators:start --only auth,database --project poslik-caisse-android > firebase-emulators.log 2>&1 &
           for i in $(seq 90); do
             if curl -s localhost:9099 > /dev/null && curl -s localhost:9000 > /dev/null; then echo "Émulateurs prêts"; exit 0; fi
