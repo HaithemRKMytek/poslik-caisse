@@ -7,7 +7,6 @@ import com.google.firebase.database.FirebaseDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.tasks.await
 
 /**
  * Point d'accès unique à Firebase.
@@ -21,17 +20,18 @@ class FirebaseAccess @Inject constructor(@ApplicationContext private val context
 
     val database: FirebaseDatabase by lazy { FirebaseDatabase.getInstance() }
 
-    private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+    val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 
-    /** Authentification anonyme : les règles refusent tout accès non authentifié. */
-    suspend fun ensureSignedIn(): String {
-        auth.currentUser?.let { return it.uid }
-        val user = checkNotNull(auth.signInAnonymously().await().user) { "Connexion anonyme refusée" }
-        return user.uid
-    }
+    /**
+     * Compte email/mot de passe connecté. Firebase garde la session sur l'appareil : elle reste
+     * valable hors ligne et après un redémarrage, seule une déconnexion explicite la ferme.
+     */
+    fun requireUid(): String = auth.currentUser?.uid ?: throw NotSignedInException()
 
     companion object {
         const val NOT_CONFIGURED = "Firebase non configuré (google-services.json manquant)"
         const val TIMEOUT_MILLIS = 20_000L
     }
 }
+
+class NotSignedInException : IllegalStateException("Aucun compte connecté")

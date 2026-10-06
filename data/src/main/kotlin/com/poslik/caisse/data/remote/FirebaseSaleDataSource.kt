@@ -30,7 +30,7 @@ class FirebaseSaleDataSource @Inject constructor(private val firebase: FirebaseA
             .child(sale.ticketNumber.key)
         return try {
             withTimeout(FirebaseAccess.TIMEOUT_MILLIS) {
-                firebase.ensureSignedIn()
+                firebase.requireUid()
                 ref.setValue(sale.toFirebaseMap()).await()
             }
             PushResult.Success

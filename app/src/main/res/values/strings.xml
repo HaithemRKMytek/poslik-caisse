@@ -2,6 +2,27 @@
 <resources>
     <string name="app_name">Poslik Caisse</string>
 
+    <!-- Connexion -->
+    <string name="login_title">Connexion</string>
+    <string name="login_title_sign_up">Créer le compte de l\'établissement</string>
+    <string name="login_explanation">Connectez-vous avec le compte email de l\'établissement. Une fois connectée, la tablette le reste, même hors ligne.</string>
+    <string name="login_email">Adresse email</string>
+    <string name="login_password">Mot de passe</string>
+    <string name="login_password_hint">Au moins %1$d caractères</string>
+    <string name="login_submit">Se connecter</string>
+    <string name="login_submit_sign_up">Créer le compte</string>
+    <string name="login_switch_to_sign_up">Pas encore de compte ? En créer un</string>
+    <string name="login_switch_to_sign_in">J\'ai déjà un compte</string>
+    <string name="login_forgot_password">Mot de passe oublié</string>
+    <string name="login_reset_sent">Un email de réinitialisation a été envoyé.</string>
+    <string name="auth_error_invalid_email">Adresse email invalide.</string>
+    <string name="auth_error_weak_password">Mot de passe trop court (6 caractères minimum).</string>
+    <string name="auth_error_wrong_credentials">Email ou mot de passe incorrect.</string>
+    <string name="auth_error_email_in_use">Un compte existe déjà avec cet email.</string>
+    <string name="auth_error_network">Pas de connexion : la première connexion nécessite le réseau.</string>
+    <string name="auth_error_too_many_attempts">Trop de tentatives. Réessayez dans quelques minutes.</string>
+    <string name="auth_error_unknown">La connexion a échoué. Réessayez.</string>
+
     <!-- Configuration -->
     <string name="setup_title">Configurer cette caisse</string>
     <string name="setup_explanation">Chaque tablette a son propre code caisse. Les tickets sont numérotés par caisse (C01-000001, C01-000002…), ce qui garantit des numéros uniques même hors ligne. Le code est réservé dans Firebase : cette étape nécessite une connexion, une seule fois.</string>
@@ -23,6 +44,14 @@
     <string name="pos_add_one">Ajouter un</string>
     <string name="pos_remove_one">Retirer un</string>
     <string name="pos_printer_failure">Panne imprimante (démo)</string>
+    <string name="pos_sign_out">Se déconnecter</string>
+    <string name="sign_out_title">Se déconnecter ?</string>
+    <string name="sign_out_account">Compte connecté : %1$s</string>
+    <string name="sign_out_warning">Il faudra du réseau pour se reconnecter, et la caisse est inutilisable d\'ici là.</string>
+    <string name="sign_out_blocked_offline">Déconnexion impossible hors ligne : la caisse ne pourrait plus se reconnecter.</string>
+    <string name="sign_out_blocked_pending">Déconnexion impossible : %1$d vente(s) pas encore synchronisée(s). Attendez la fin de la synchronisation.</string>
+    <string name="sign_out_confirm">Se déconnecter</string>
+    <string name="sign_out_cancel">Annuler</string>
 
     <!-- Réseau -->
     <string name="network_offline">Hors ligne : les ventes sont enregistrées et seront synchronisées au retour du réseau.</string>
