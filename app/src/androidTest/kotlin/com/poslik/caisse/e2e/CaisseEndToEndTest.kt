@@ -12,18 +12,15 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.google.android.gms.tasks.TaskCompletionSource
-import com.google.android.gms.tasks.Tasks
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import com.poslik.caisse.FirebaseEmulatorRunner
 import com.poslik.caisse.MainActivity
 import com.poslik.caisse.R
 import com.poslik.caisse.domain.model.Catalog
 import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
 import java.util.concurrent.TimeUnit
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -65,7 +62,7 @@ class CaisseEndToEndTest {
 
         // En ligne : la vente arrive dans Firebase.
         sell("C01-000001")
-        eventually("1 vente dans Firebase") { assertEquals(1, remoteSales().childrenCount) }
+        eventually("1 vente dans Firebase") { assertEquals(1, remoteSales().length()) }
 
         // Hors ligne : on continue d'encaisser, les numéros se suivent.
         setNetwork(enabled = false)
@@ -84,7 +81,7 @@ class CaisseEndToEndTest {
         compose.onNodeWithTag("printer-failure").performClick()
         sell("C01-000004")
         eventually("ticket 4 en échec dans Firebase") {
-            assertEquals("FAILED", remoteSales().child("000004").child("printStatus").value)
+            assertEquals("FAILED", remoteSales().ticket("000004").optString("printStatus"))
         }
         screenshot("4-panne-imprimante")
     }
@@ -96,12 +93,12 @@ class CaisseEndToEndTest {
         eventually("ticket 4 réimprimé au démarrage") {
             val sales = remoteSales()
             assertSalesWithoutDuplicates(sales, expected = 4)
-            assertEquals("PRINTED", sales.child("000004").child("printStatus").value)
+            assertEquals("PRINTED", sales.ticket("000004").optString("printStatus"))
         }
         // Les tickets déjà imprimés ne repartent jamais à l'impression.
         val sales = remoteSales()
         for (key in listOf("000001", "000002", "000003")) {
-            assertEquals("$key imprimé une seule fois", 1L, sales.child(key).child("printAttempts").value)
+            assertEquals("$key imprimé une seule fois", 1, sales.ticket(key).optInt("printAttempts"))
         }
         screenshot("5-apres-redemarrage")
     }
@@ -112,27 +109,31 @@ class CaisseEndToEndTest {
         waitForText(context.getString(R.string.pos_last_ticket, expectedTicket))
     }
 
-    private fun assertSalesWithoutDuplicates(sales: DataSnapshot, expected: Int) {
-        val keys = sales.children.map { it.key }
+    private fun assertSalesWithoutDuplicates(sales: JSONObject, expected: Int) {
+        val keys = sales.keys().asSequence().sorted().toList()
         assertEquals((1..expected).map { "%06d".format(it) }, keys)
-        assertEquals(expected, sales.children.map { it.child("saleId").value }.toSet().size)
+        assertEquals(expected, keys.map { sales.getJSONObject(it).getString("saleId") }.toSet().size)
     }
 
-    // Écouteur ponctuel plutôt que get() : get() peut rester bloqué, l'écouteur reçoit l'état serveur.
-    private fun remoteSales(): DataSnapshot {
-        val result = TaskCompletionSource<DataSnapshot>()
-        FirebaseDatabase.getInstance().getReference("sales/C01").addListenerForSingleValueEvent(
-            object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    result.trySetResult(snapshot)
-                }
+    private fun JSONObject.ticket(key: String): JSONObject = optJSONObject(key) ?: JSONObject()
 
-                override fun onCancelled(error: DatabaseError) {
-                    result.trySetException(error.toException())
-                }
-            },
-        )
-        return Tasks.await(result.task, TIMEOUT_SECONDS, TimeUnit.SECONDS)
+    /**
+     * Lit la base de l'émulateur par son API REST, avec le jeton administrateur de l'émulateur :
+     * la vérification ne dépend ni du SDK ni du compte de l'app qu'elle contrôle.
+     */
+    private fun remoteSales(): JSONObject {
+        val url = URL("http://10.0.2.2:9000/sales/C01.json?ns=$DATABASE_NAMESPACE")
+        val connection = (url.openConnection() as HttpURLConnection).apply {
+            setRequestProperty("Authorization", "Bearer owner")
+            connectTimeout = TIMEOUT_MILLIS
+            readTimeout = TIMEOUT_MILLIS
+        }
+        try {
+            val body = connection.inputStream.bufferedReader().use { it.readText() }
+            return if (body == "null") JSONObject() else JSONObject(body)
+        } finally {
+            connection.disconnect()
+        }
     }
 
     private fun eventually(what: String, assertion: () -> Unit) {
@@ -176,7 +177,8 @@ class CaisseEndToEndTest {
     private companion object {
         const val UI_TIMEOUT_MILLIS = 30_000L
         const val SYNC_TIMEOUT_SECONDS = 90L
-        const val TIMEOUT_SECONDS = 15L
+        const val TIMEOUT_MILLIS = 15_000
+        const val DATABASE_NAMESPACE = "poslik-caisse-android-default-rtdb"
         const val POLL_MILLIS = 1_000L
     }
 }
