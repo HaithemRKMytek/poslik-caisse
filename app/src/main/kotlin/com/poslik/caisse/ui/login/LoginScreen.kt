@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -21,6 +22,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -28,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -35,6 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.poslik.caisse.R
 import com.poslik.caisse.domain.auth.AuthError
 import com.poslik.caisse.domain.auth.Credentials
+import com.poslik.caisse.ui.components.FeedbackMessage
 import com.poslik.caisse.ui.theme.CaisseTheme
 import com.poslik.caisse.ui.theme.StatusColors
 
@@ -64,6 +70,7 @@ data class LoginActions(
 @Composable
 fun LoginContent(state: LoginUiState, actions: LoginActions) {
     val isSignUp = state.mode == LoginMode.SIGN_UP
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -98,21 +105,24 @@ fun LoginContent(state: LoginUiState, actions: LoginActions) {
                 } else {
                     null
                 },
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    TextButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Text(stringResource(if (passwordVisible) R.string.login_hide_password else R.string.login_show_password))
+                    }
+                },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { actions.onSubmit() }),
                 modifier = Modifier.fillMaxWidth().testTag("login-password"),
             )
-            state.error?.let {
-                Text(it.message(), color = StatusColors.Error, style = MaterialTheme.typography.bodyMedium)
-            }
+            state.error?.let { FeedbackMessage(it.message(), StatusColors.Error) }
             if (state.resetEmailSent) {
-                Text(stringResource(R.string.login_reset_sent), color = StatusColors.Success, style = MaterialTheme.typography.bodyMedium)
+                FeedbackMessage(stringResource(R.string.login_reset_sent), StatusColors.Success)
             }
             Button(
                 onClick = actions.onSubmit,
                 enabled = !state.isSubmitting,
-                modifier = Modifier.fillMaxWidth().testTag("login-submit"),
+                modifier = Modifier.fillMaxWidth().height(52.dp).testTag("login-submit"),
             ) {
                 if (state.isSubmitting) {
                     CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)

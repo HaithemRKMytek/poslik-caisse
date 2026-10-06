@@ -11,6 +11,8 @@ import com.poslik.caisse.domain.model.Catalog
 import com.poslik.caisse.domain.model.Product
 import com.poslik.caisse.domain.network.NetworkStatus
 import com.poslik.caisse.domain.repository.SaleRepository
+import com.poslik.caisse.domain.sync.SyncDiagnostics
+import com.poslik.caisse.domain.sync.SyncNowRequester
 import com.poslik.caisse.domain.usecase.CheckoutUseCase
 import com.poslik.caisse.ui.STOP_TIMEOUT_MILLIS
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -36,8 +38,14 @@ data class PosUiState(
     val printerFailureMode: Boolean = false,
     /** Null en mode hors ligne de démonstration (Firebase non configuré) : pas de compte. */
     val accountEmail: String? = null,
+    /** Tickets dont l'impression a échoué : le caissier doit les réimprimer depuis l'historique. */
+    val failedPrintCount: Int = 0,
+    val isSyncing: Boolean = false,
 ) {
     val canCheckout: Boolean get() = !cart.isEmpty && !isCheckingOut
+
+    /** Quantité par produit, pour les pastilles de la grille. */
+    val quantities: Map<String, Int> get() = cart.lines.associate { it.product.id to it.quantity }
 
     /**
      * Se déconnecter hors ligne ou avec des ventes non envoyées bloquerait la caisse (reconnexion
@@ -51,9 +59,11 @@ class PosViewModel @Inject constructor(
     private val checkoutUseCase: CheckoutUseCase,
     private val printerSettings: PrinterSettings,
     private val authRepository: AuthRepository,
+    private val syncNowRequester: SyncNowRequester,
     @ApplicationScope private val applicationScope: CoroutineScope,
     saleRepository: SaleRepository,
     networkStatus: NetworkStatus,
+    syncDiagnostics: SyncDiagnostics,
 ) : ViewModel() {
 
     private data class LocalState(
@@ -65,28 +75,43 @@ class PosViewModel @Inject constructor(
 
     private val local = MutableStateFlow(LocalState())
 
-    val state: StateFlow<PosUiState> = combine(
-        local,
+    private data class SyncInfo(val isOnline: Boolean, val unsynced: Int, val isSyncing: Boolean)
+
+    private val syncInfo = combine(
         networkStatus.isOnline,
         saleRepository.observeUnsyncedCount(),
+        syncDiagnostics.isSyncing,
+        ::SyncInfo,
+    )
+
+    val state: StateFlow<PosUiState> = combine(
+        local,
+        syncInfo,
         printerSettings.failureMode,
         authRepository.authState,
-    ) { local, online, unsynced, failureMode, auth ->
+        saleRepository.observePrintFailureCount(),
+    ) { local, sync, failureMode, auth, failedPrints ->
         PosUiState(
             cart = local.cart,
             isCheckingOut = local.isCheckingOut,
             lastTicket = local.lastTicket,
             checkoutError = local.checkoutError,
-            isOnline = online,
-            unsyncedCount = unsynced,
+            isOnline = sync.isOnline,
+            unsyncedCount = sync.unsynced,
             printerFailureMode = failureMode,
             accountEmail = (auth as? AuthState.SignedIn)?.let { it.email ?: it.uid },
+            failedPrintCount = failedPrints,
+            isSyncing = sync.isSyncing,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), PosUiState())
 
     fun addProduct(product: Product) = editCart { it.add(product) }
 
     fun removeOne(productId: String) = editCart { it.removeOne(productId) }
+
+    fun syncNow() = syncNowRequester.syncNow()
+
+    fun clearCart() = editCart { Cart() }
 
     fun setPrinterFailureMode(enabled: Boolean) = printerSettings.setFailureMode(enabled)
 

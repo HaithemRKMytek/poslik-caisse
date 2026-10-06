@@ -25,6 +25,13 @@ class CartTest {
     }
 
     @Test
+    fun `a line quantity is capped`() {
+        val cart = (1..Cart.MAX_LINE_QUANTITY + 5).fold(Cart()) { acc, _ -> acc.add(espresso) }
+
+        assertEquals(Cart.MAX_LINE_QUANTITY, cart.lines.single().quantity)
+    }
+
+    @Test
     fun `removing the last unit removes the line`() {
         val cart = Cart().add(espresso).add(espresso).removeOne("espresso").removeOne("espresso")
 

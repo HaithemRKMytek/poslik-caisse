@@ -11,6 +11,7 @@ import com.poslik.caisse.domain.model.Money
 import com.poslik.caisse.domain.model.PrintStatus
 import com.poslik.caisse.domain.network.NetworkStatus
 import com.poslik.caisse.domain.printing.PrintSpooler
+import com.poslik.caisse.domain.sync.SyncDiagnostics
 import com.poslik.caisse.domain.usecase.CheckoutUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -37,6 +38,8 @@ class PosViewModelTest {
     private val online = MutableStateFlow(false)
     private val auth = FakeAuthRepository(AuthState.SignedIn(uid = "uid-1", email = "caisse@poslik.tn"))
     private var syncRequests = 0
+    private var syncNowRequests = 0
+    private val diagnostics = SyncDiagnostics()
 
     @Before
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -51,7 +54,9 @@ class PosViewModelTest {
             checkoutUseCase = checkout,
             printerSettings = PrinterSettings(),
             authRepository = auth,
+            syncNowRequester = { syncNowRequests++ },
             applicationScope = this,
+            syncDiagnostics = diagnostics,
             saleRepository = repository,
             networkStatus = object : NetworkStatus {
                 override val isOnline = online
@@ -92,6 +97,45 @@ class PosViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, repository.all.size)
+    }
+
+    @Test
+    fun `syncing flag reaches the state and the sync button triggers an immediate sync`() = runTest {
+        val viewModel = viewModel()
+
+        diagnostics.started()
+        assertTrue(viewModel.state.value.isSyncing)
+
+        diagnostics.finished()
+        assertFalse(viewModel.state.value.isSyncing)
+
+        viewModel.syncNow()
+        assertEquals(1, syncNowRequests)
+    }
+
+    @Test
+    fun `failed prints are counted so the cashier is warned`() = runTest {
+        val viewModel = viewModel()
+        printer.failing = true
+        viewModel.addProduct(Catalog.products[0])
+
+        viewModel.checkout()
+        advanceUntilIdle()
+        drainPrintQueue()
+
+        assertEquals(1, viewModel.state.value.failedPrintCount)
+    }
+
+    @Test
+    fun `clearing the cart empties it and disables checkout`() = runTest {
+        val viewModel = viewModel()
+        viewModel.addProduct(Catalog.products[0])
+        viewModel.addProduct(Catalog.products[1])
+
+        viewModel.clearCart()
+
+        assertTrue(viewModel.state.value.cart.isEmpty)
+        assertFalse(viewModel.state.value.canCheckout)
     }
 
     @Test

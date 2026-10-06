@@ -13,6 +13,8 @@
     <string name="login_submit_sign_up">Créer le compte</string>
     <string name="login_switch_to_sign_up">Pas encore de compte ? En créer un</string>
     <string name="login_switch_to_sign_in">J\'ai déjà un compte</string>
+    <string name="login_show_password">Afficher</string>
+    <string name="login_hide_password">Masquer</string>
     <string name="login_forgot_password">Mot de passe oublié</string>
     <string name="login_reset_sent">Un email de réinitialisation a été envoyé.</string>
     <string name="auth_error_invalid_email">Adresse email invalide.</string>
@@ -36,7 +38,15 @@
     <string name="pos_title">Caisse %1$s</string>
     <string name="pos_history">Historique</string>
     <string name="pos_cart">Panier</string>
-    <string name="pos_cart_empty">Touchez un produit pour l\'ajouter au panier.</string>
+    <string name="pos_cart_empty">Panier vide</string>
+    <string name="pos_cart_empty_hint">Touchez un produit pour l\'ajouter.</string>
+    <string name="pos_clear_cart">Vider</string>
+    <plurals name="pos_cart_items">
+        <item quantity="one">%1$d article</item>
+        <item quantity="other">%1$d articles</item>
+    </plurals>
+    <string name="pos_product_in_cart">%1$s, %2$d dans le panier</string>
+    <string name="pos_checking_out">Encaissement en cours…</string>
     <string name="pos_total">Total</string>
     <string name="pos_checkout">Encaisser %1$s</string>
     <string name="pos_last_ticket">Dernier ticket : %1$s</string>
@@ -56,13 +66,25 @@
     <!-- Réseau -->
     <string name="network_offline">Hors ligne : les ventes sont enregistrées et seront synchronisées au retour du réseau.</string>
     <string name="network_pending">%1$d vente(s) en attente de synchronisation</string>
+    <string name="network_sync_now">Synchroniser</string>
+    <string name="network_syncing">Synchronisation…</string>
     <string name="network_synced">En ligne, tout est synchronisé</string>
 
     <!-- Historique -->
     <string name="history_title">Historique des ventes</string>
     <string name="history_back">Retour à la caisse</string>
     <string name="history_empty">Aucune vente pour le moment.</string>
+    <string name="history_reprint_error">La réimpression a échoué. Réessayez.</string>
     <string name="history_reprint">Réimprimer</string>
+    <string name="print_error_offline">Imprimante injoignable. Vérifiez qu\'elle est allumée et connectée.</string>
+    <string name="print_error_paper">Plus de papier dans l\'imprimante.</string>
+    <string name="print_error_timeout">L\'imprimante ne répond pas. Réessayez dans un instant.</string>
+    <string name="print_error_unknown">Le ticket n\'a pas pu être imprimé.</string>
+    <plurals name="print_alert">
+        <item quantity="one">%1$d ticket non imprimé</item>
+        <item quantity="other">%1$d tickets non imprimés</item>
+    </plurals>
+    <string name="print_alert_action">Voir</string>
     <string name="print_pending">En attente</string>
     <string name="print_printed">Imprimé</string>
     <string name="print_failed">Échec</string>

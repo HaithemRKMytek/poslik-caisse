@@ -17,10 +17,13 @@ data class Cart(val lines: List<CartLine> = emptyList()) {
 
     val itemCount: Int get() = lines.sumOf { it.quantity }
 
+    /** Ajoute une unité ; ignoré au-delà de [MAX_LINE_QUANTITY] (appui répété par erreur). */
     fun add(product: Product): Cart {
         val existing = lines.indexOfFirst { it.product.id == product.id }
         return if (existing == -1) {
             copy(lines = lines + CartLine(product, 1))
+        } else if (lines[existing].quantity >= MAX_LINE_QUANTITY) {
+            this
         } else {
             copy(lines = lines.mapIndexed { i, line -> if (i == existing) line.copy(quantity = line.quantity + 1) else line })
         }
@@ -36,6 +39,10 @@ data class Cart(val lines: List<CartLine> = emptyList()) {
             }
         },
     )
+
+    companion object {
+        const val MAX_LINE_QUANTITY = 99
+    }
 
     fun toSaleLines(): List<SaleLine> = lines.map {
         SaleLine(
