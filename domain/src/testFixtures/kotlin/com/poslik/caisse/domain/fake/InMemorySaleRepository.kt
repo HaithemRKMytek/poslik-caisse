@@ -75,8 +75,7 @@ class InMemorySaleRepository(private val registerCode: RegisterCode = RegisterCo
         return applied
     }
 
-    override fun observePrintFailureCount(): Flow<Int> =
-        rows.map { map -> map.values.count { it.sale.printStatus == PrintStatus.FAILED } }
+    override fun observePrintFailureCount(): Flow<Int> = rows.map { map -> map.values.count { it.sale.printStatus == PrintStatus.FAILED } }
 
     override fun observeUnsyncedCount(): Flow<Int> = rows.map { map -> map.values.count { it.syncedVersion < it.version } }
 

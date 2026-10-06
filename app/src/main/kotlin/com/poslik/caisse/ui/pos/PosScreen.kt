@@ -259,7 +259,11 @@ private fun QuantityBadge(quantity: Int, modifier: Modifier = Modifier) {
 
 @Composable
 private fun CartPanel(state: PosUiState, actions: PosActions, modifier: Modifier) {
-    Surface(modifier = modifier, tonalElevation = 2.dp, shape = MaterialTheme.shapes.large.copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp))) {
+    Surface(
+        modifier = modifier,
+        tonalElevation = 2.dp,
+        shape = MaterialTheme.shapes.large.copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)),
+    ) {
         Column(Modifier.padding(16.dp)) {
             CartHeader(state, actions.onClearCart)
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
@@ -434,7 +438,11 @@ private val PRODUCT_CARD_MIN_HEIGHT = 88.dp
 private fun PosTabletPreview() {
     val cart = Cart().add(Catalog.products[0]).add(Catalog.products[0]).add(Catalog.products[5])
     CaisseTheme {
-        PosContent("C01", PosUiState(cart = cart, lastTicket = "C01-000041", isOnline = true, unsyncedCount = 3, failedPrintCount = 2), PosActions())
+        PosContent(
+            "C01",
+            PosUiState(cart = cart, lastTicket = "C01-000041", isOnline = true, unsyncedCount = 3, failedPrintCount = 2),
+            PosActions(),
+        )
     }
 }
 

@@ -16,11 +16,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-data class HistoryUiState(
-    val isLoading: Boolean = true,
-    val sales: List<Sale> = emptyList(),
-    val reprintFailed: Boolean = false,
-)
+data class HistoryUiState(val isLoading: Boolean = true, val sales: List<Sale> = emptyList(), val reprintFailed: Boolean = false)
 
 @HiltViewModel
 class HistoryViewModel @Inject constructor(saleRepository: SaleRepository, private val reprintFailedTicket: ReprintFailedTicketUseCase) :

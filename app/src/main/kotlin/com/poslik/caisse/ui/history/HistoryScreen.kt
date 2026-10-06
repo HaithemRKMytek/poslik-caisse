@@ -70,12 +70,7 @@ fun HistoryScreen(onBack: () -> Unit, viewModel: HistoryViewModel = hiltViewMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HistoryContent(
-    state: HistoryUiState,
-    onBack: () -> Unit,
-    onReprint: (String) -> Unit,
-    onReprintErrorShown: () -> Unit = {},
-) {
+fun HistoryContent(state: HistoryUiState, onBack: () -> Unit, onReprint: (String) -> Unit, onReprintErrorShown: () -> Unit = {}) {
     val snackbarHostState = remember { SnackbarHostState() }
     val reprintError = stringResource(R.string.history_reprint_error)
     LaunchedEffect(state.reprintFailed) {
