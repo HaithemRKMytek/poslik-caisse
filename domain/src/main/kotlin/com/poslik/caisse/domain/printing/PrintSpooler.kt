@@ -56,7 +56,7 @@ class PrintSpooler(
         val result = try {
             withTimeout(printTimeoutMillis) { printer.print(sale) }
         } catch (e: TimeoutCancellationException) {
-            PrintResult.Failure("Délai d'impression dépassé")
+            PrintResult.Failure("Délai d'impression dépassé", PrintFailureKind.TIMEOUT)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -65,7 +65,7 @@ class PrintSpooler(
 
         val applied = when (result) {
             PrintResult.Success -> repository.updatePrintStatus(saleId, PrintStatus.PRINTED)
-            is PrintResult.Failure -> repository.updatePrintStatus(saleId, PrintStatus.FAILED, result.reason)
+            is PrintResult.Failure -> repository.updatePrintStatus(saleId, PrintStatus.FAILED, result.storedError)
         }
         // Rien à notifier si un autre processus a déjà gagné la course (ticket marqué imprimé entre-temps) :
         // son propre appel a déjà demandé la synchronisation.

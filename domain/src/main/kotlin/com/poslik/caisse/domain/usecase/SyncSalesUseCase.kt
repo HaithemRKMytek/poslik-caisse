@@ -3,6 +3,7 @@ package com.poslik.caisse.domain.usecase
 import com.poslik.caisse.domain.sync.PushResult
 import com.poslik.caisse.domain.sync.RemoteSaleDataSource
 import com.poslik.caisse.domain.sync.SaleSyncStore
+import com.poslik.caisse.domain.sync.SyncDiagnostics
 import javax.inject.Inject
 
 data class SyncReport(val pushed: Int, val conflicts: Int, val failure: String?) {
@@ -18,8 +19,22 @@ data class SyncReport(val pushed: Int, val conflicts: Int, val failure: String?)
  * - **Sans mise à jour perdue** : si la vente change pendant l'envoi (ticket imprimé entre-temps),
  *   elle n'est pas marquée et repart au passage suivant.
  */
-class SyncSalesUseCase @Inject constructor(private val store: SaleSyncStore, private val remote: RemoteSaleDataSource) {
+class SyncSalesUseCase @Inject constructor(
+    private val store: SaleSyncStore,
+    private val remote: RemoteSaleDataSource,
+    private val diagnostics: SyncDiagnostics = SyncDiagnostics(),
+) {
     suspend operator fun invoke(batchSize: Int = DEFAULT_BATCH_SIZE): SyncReport {
+        diagnostics.started()
+        try {
+            return push(batchSize)
+        } finally {
+            // Aussi en cas d'annulation (relance immédiate) : l'indicateur ne doit jamais rester bloqué.
+            diagnostics.finished()
+        }
+    }
+
+    private suspend fun push(batchSize: Int): SyncReport {
         var pushed = 0
         var conflicts = 0
         repeat(MAX_ROUNDS) {

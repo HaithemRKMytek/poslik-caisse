@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.poslik.caisse.data.di.ApplicationScope
+import com.poslik.caisse.domain.sync.SyncOnReconnect
 import com.poslik.caisse.domain.sync.SyncScheduler
 import com.poslik.caisse.domain.usecase.ResumePendingPrintsUseCase
 import dagger.hilt.android.HiltAndroidApp
@@ -22,6 +23,8 @@ class CaisseApplication :
 
     @Inject lateinit var syncScheduler: SyncScheduler
 
+    @Inject lateinit var syncOnReconnect: SyncOnReconnect
+
     @Inject
     @field:ApplicationScope
     lateinit var applicationScope: CoroutineScope
@@ -35,5 +38,7 @@ class CaisseApplication :
         applicationScope.launch { resumePendingPrints() }
         // Rattrape une synchronisation interrompue (app tuée, tablette redémarrée).
         syncScheduler.requestSync()
+        // Au retour du réseau, on repart tout de suite au lieu d'attendre le délai de reprise.
+        applicationScope.launch { syncOnReconnect.run() }
     }
 }

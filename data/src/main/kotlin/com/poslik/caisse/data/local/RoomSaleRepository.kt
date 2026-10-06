@@ -64,6 +64,8 @@ class RoomSaleRepository @Inject constructor(private val database: CaisseDatabas
         return saleDao.updatePrintStatus(saleId, status, error, attemptIncrement) == 1
     }
 
+    override fun observePrintFailureCount(): Flow<Int> = saleDao.observePrintFailureCount()
+
     override fun observeUnsyncedCount(): Flow<Int> = saleDao.observeUnsyncedCount()
 
     override suspend fun unsyncedSales(limit: Int): List<SyncCandidate> =

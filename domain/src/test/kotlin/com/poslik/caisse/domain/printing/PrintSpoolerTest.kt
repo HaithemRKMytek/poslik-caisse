@@ -50,7 +50,33 @@ class PrintSpoolerTest {
         spooler.enqueue(sale.saleId)
         drainPrintQueue()
 
-        assertEquals(PrintStatus.FAILED, repository.getSale(sale.saleId)!!.printStatus)
+        val stored = repository.getSale(sale.saleId)!!
+        assertEquals(PrintStatus.FAILED, stored.printStatus)
+        assertEquals(PrintFailureKind.TIMEOUT, PrintFailureKind.fromCode(stored.lastPrintError))
+    }
+
+    @Test
+    fun `a classified failure is stored as its code, an unclassified one keeps its detail`() = runTest {
+        var next: PrintResult = PrintResult.Failure("Bourrage papier", PrintFailureKind.OUT_OF_PAPER)
+        val spooler = PrintSpooler({ next }, repository, backgroundScope)
+        val classified = repository.seed(PrintStatus.PENDING)
+        val unclassified = repository.seed(PrintStatus.PENDING)
+
+        spooler.enqueue(classified.saleId)
+        drainPrintQueue()
+        next = PrintResult.Failure("Erreur inconnue 0x42")
+        spooler.enqueue(unclassified.saleId)
+        drainPrintQueue()
+
+        assertEquals("OUT_OF_PAPER", repository.getSale(classified.saleId)!!.lastPrintError)
+        assertEquals("Erreur inconnue 0x42", repository.getSale(unclassified.saleId)!!.lastPrintError)
+    }
+
+    @Test
+    fun `stored codes map back to a kind and anything else falls back to unknown`() {
+        assertEquals(PrintFailureKind.OUT_OF_PAPER, PrintFailureKind.fromCode("OUT_OF_PAPER"))
+        assertEquals(PrintFailureKind.UNKNOWN, PrintFailureKind.fromCode("Plus de papier"))
+        assertEquals(PrintFailureKind.UNKNOWN, PrintFailureKind.fromCode(null))
     }
 
     @Test

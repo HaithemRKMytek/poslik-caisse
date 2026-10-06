@@ -6,6 +6,7 @@ import com.poslik.caisse.domain.model.Sale
 import com.poslik.caisse.domain.model.SyncStatus
 import com.poslik.caisse.domain.sync.PushResult
 import com.poslik.caisse.domain.sync.RemoteSaleDataSource
+import com.poslik.caisse.domain.sync.SyncDiagnostics
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -35,7 +36,25 @@ class SyncSalesUseCaseTest {
     }
 
     private val remote = FakeRemote()
-    private val sync = SyncSalesUseCase(repository, remote)
+    private val diagnostics = SyncDiagnostics()
+    private val sync = SyncSalesUseCase(repository, remote, diagnostics)
+
+    @Test
+    fun `the syncing flag is raised during a pass and always lowered afterwards`() = runTest {
+        repository.seed(PrintStatus.PENDING)
+        var duringPush = false
+        remote.beforeAck = { duringPush = diagnostics.isSyncing.value }
+
+        sync()
+
+        assertTrue(duringPush)
+        assertEquals(false, diagnostics.isSyncing.value)
+
+        remote.online = false
+        repository.seed(PrintStatus.PENDING)
+        sync()
+        assertEquals(false, diagnostics.isSyncing.value)
+    }
 
     @Test
     fun `offline sales are kept and pushed once the network is back`() = runTest {

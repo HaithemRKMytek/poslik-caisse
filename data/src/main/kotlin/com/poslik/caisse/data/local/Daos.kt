@@ -60,6 +60,9 @@ interface SaleDao {
     )
     suspend fun updatePrintStatus(saleId: String, status: PrintStatus, error: String?, attemptIncrement: Int): Int
 
+    @Query("SELECT COUNT(*) FROM sales WHERE print_status = 'FAILED'")
+    fun observePrintFailureCount(): Flow<Int>
+
     @Query("SELECT COUNT(*) FROM sales WHERE synced_version < version")
     fun observeUnsyncedCount(): Flow<Int>
 

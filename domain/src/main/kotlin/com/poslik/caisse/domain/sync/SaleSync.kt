@@ -37,3 +37,11 @@ fun interface RemoteSaleDataSource {
 fun interface SyncScheduler {
     fun requestSync()
 }
+
+/**
+ * Lance une synchronisation immédiate, en ignorant le délai de reprise après échec
+ * (bouton « Synchroniser » et retour du réseau). Implémenté par WorkManager.
+ */
+fun interface SyncNowRequester {
+    fun syncNow()
+}

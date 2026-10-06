@@ -29,6 +29,9 @@ interface SaleRepository {
      */
     suspend fun updatePrintStatus(saleId: String, status: PrintStatus, error: String? = null): Boolean
 
+    /** Nombre de tickets dont l'impression a échoué et qui attendent une réimpression. */
+    fun observePrintFailureCount(): Flow<Int>
+
     /** Nombre de ventes pas encore (ou plus) synchronisées. */
     fun observeUnsyncedCount(): Flow<Int>
 }

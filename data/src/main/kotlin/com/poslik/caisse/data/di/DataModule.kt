@@ -21,6 +21,7 @@ import com.poslik.caisse.domain.repository.RegisterRepository
 import com.poslik.caisse.domain.repository.SaleRepository
 import com.poslik.caisse.domain.sync.RemoteSaleDataSource
 import com.poslik.caisse.domain.sync.SaleSyncStore
+import com.poslik.caisse.domain.sync.SyncNowRequester
 import com.poslik.caisse.domain.sync.SyncScheduler
 import com.poslik.caisse.domain.usecase.Clock
 import dagger.Binds
@@ -96,6 +97,9 @@ abstract class DataBindsModule {
 
     @Binds
     abstract fun syncScheduler(impl: WorkManagerSyncScheduler): SyncScheduler
+
+    @Binds
+    abstract fun syncNowRequester(impl: WorkManagerSyncScheduler): SyncNowRequester
 
     @Binds
     abstract fun networkStatus(impl: NetworkMonitor): NetworkStatus

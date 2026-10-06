@@ -2,6 +2,7 @@ package com.poslik.caisse.data.printing
 
 import android.util.Log
 import com.poslik.caisse.domain.model.Sale
+import com.poslik.caisse.domain.printing.PrintFailureKind
 import com.poslik.caisse.domain.printing.PrintResult
 import com.poslik.caisse.domain.printing.TicketFormatter
 import com.poslik.caisse.domain.printing.TicketPrinter
@@ -36,7 +37,7 @@ class FakeTicketPrinter @Inject constructor(private val settings: PrinterSetting
 
     override suspend fun print(sale: Sale): PrintResult {
         delay(PRINT_DURATION_MILLIS)
-        if (settings.failureMode.value) return PrintResult.Failure("Imprimante hors ligne (simulation)")
+        if (settings.failureMode.value) return PrintResult.Failure("Imprimante hors ligne (simulation)", PrintFailureKind.PRINTER_OFFLINE)
         val date = DATE_FORMAT.format(Instant.ofEpochMilli(sale.createdAt))
         Log.i(TAG, "\n" + TicketFormatter.format(sale, date))
         return PrintResult.Success
