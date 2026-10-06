@@ -77,6 +77,17 @@ class CaisseEndToEndTest {
         waitForText(string(R.string.network_synced))
         screenshot("3-synchronise")
 
+        // La file d'impression est à un seul ticket à la fois (FakeTicketPrinter vérifie la panne
+        // simulée *après* son délai) : si le ticket 3 est encore en cours d'impression quand on
+        // active la panne ci-dessous, il échoue lui aussi au lieu du ticket 4 visé. On attend donc
+        // que les trois premiers tickets soient réellement imprimés, pas seulement synchronisés.
+        eventually("tickets 1 à 3 imprimés avant la panne") {
+            val sales = remoteSales()
+            for (key in listOf("000001", "000002", "000003")) {
+                assertEquals("PRINTED", sales.ticket(key).optString("printStatus"))
+            }
+        }
+
         // Panne imprimante : le ticket est enregistré et marqué en échec, jusque dans Firebase.
         compose.onNodeWithTag("printer-failure").performClick()
         sell("C01-000004")
