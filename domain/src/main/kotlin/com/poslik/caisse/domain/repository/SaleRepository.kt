@@ -23,8 +23,11 @@ interface SaleRepository {
     /** Tickets à (ré)imprimer au démarrage : en attente ou en échec, par numéro croissant. */
     suspend fun salesToPrint(): List<Sale>
 
-    /** Change l'état d'impression ; toute modification redemande une synchronisation. */
-    suspend fun updatePrintStatus(saleId: String, status: PrintStatus, error: String? = null)
+    /**
+     * Change l'état d'impression ; toute modification redemande une synchronisation.
+     * @return false si le ticket était déjà imprimé (transition ignorée, jamais de double impression).
+     */
+    suspend fun updatePrintStatus(saleId: String, status: PrintStatus, error: String? = null): Boolean
 
     /** Nombre de ventes pas encore (ou plus) synchronisées. */
     fun observeUnsyncedCount(): Flow<Int>

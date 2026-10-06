@@ -63,11 +63,13 @@ class PrintSpooler(
             PrintResult.Failure(e.message ?: e::class.simpleName.orEmpty())
         }
 
-        when (result) {
+        val applied = when (result) {
             PrintResult.Success -> repository.updatePrintStatus(saleId, PrintStatus.PRINTED)
             is PrintResult.Failure -> repository.updatePrintStatus(saleId, PrintStatus.FAILED, result.reason)
         }
-        onStatusChanged()
+        // Rien à notifier si un autre processus a déjà gagné la course (ticket marqué imprimé entre-temps) :
+        // son propre appel a déjà demandé la synchronisation.
+        if (applied) onStatusChanged()
     }
 
     companion object {

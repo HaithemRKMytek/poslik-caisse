@@ -61,13 +61,18 @@ class InMemorySaleRepository(private val registerCode: RegisterCode = RegisterCo
 
     override suspend fun salesToPrint(): List<Sale> = all.filter { it.printStatus != PrintStatus.PRINTED }
 
-    override suspend fun updatePrintStatus(saleId: String, status: PrintStatus, error: String?) {
+    override suspend fun updatePrintStatus(saleId: String, status: PrintStatus, error: String?): Boolean {
+        var applied = false
         rows.update { map ->
             val row = map[saleId] ?: return@update map
+            // Même garde que Room : un ticket déjà imprimé n'est plus jamais modifié.
+            if (row.sale.printStatus == PrintStatus.PRINTED) return@update map
+            applied = true
             val attempts = row.sale.printAttempts + if (status == PrintStatus.PENDING) 0 else 1
             val sale = row.sale.copy(printStatus = status, lastPrintError = error, printAttempts = attempts)
             map + (saleId to row.copy(sale = sale, version = row.version + 1))
         }
+        return applied
     }
 
     override fun observeUnsyncedCount(): Flow<Int> = rows.map { map -> map.values.count { it.syncedVersion < it.version } }

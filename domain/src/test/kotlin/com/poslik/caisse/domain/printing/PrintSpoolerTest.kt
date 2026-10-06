@@ -77,6 +77,21 @@ class PrintSpoolerTest {
     }
 
     @Test
+    fun `a ticket raced by two spoolers is only ever counted as printed once`() = runTest {
+        // Simule deux processus qui se chevauchent (l'ancien pas encore tué, le nouveau déjà
+        // démarré) : chacun a sa propre file en mémoire mais partage la même base.
+        val spoolerA = PrintSpooler(printer, repository, backgroundScope)
+        val spoolerB = PrintSpooler(printer, repository, backgroundScope)
+        val sale = repository.seed(PrintStatus.PENDING)
+
+        spoolerA.enqueue(sale.saleId)
+        spoolerB.enqueue(sale.saleId)
+        drainPrintQueue()
+
+        assertEquals(1, repository.getSale(sale.saleId)!!.printAttempts)
+    }
+
+    @Test
     fun `every print result asks for a sync so Firebase gets the new state`() = runTest {
         var syncRequests = 0
         val spooler = PrintSpooler(printer, repository, backgroundScope, onStatusChanged = { syncRequests++ })

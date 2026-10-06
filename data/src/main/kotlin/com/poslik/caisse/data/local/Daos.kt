@@ -43,6 +43,11 @@ interface SaleDao {
     @Query("SELECT * FROM sales WHERE print_status IN ('PENDING', 'FAILED') ORDER BY ticket_number")
     suspend fun salesToPrint(): List<SaleWithLines>
 
+    /**
+     * N'applique jamais la transition si le ticket est déjà imprimé : protège contre une
+     * réimpression concurrente par l'ancien processus lors d'un redémarrage (`force-stop` n'est
+     * pas instantané, les deux processus peuvent brièvement partager le même fichier SQLite).
+     */
     @Query(
         """
         UPDATE sales
@@ -50,7 +55,7 @@ interface SaleDao {
             last_print_error = :error,
             print_attempts = print_attempts + :attemptIncrement,
             version = version + 1
-        WHERE sale_id = :saleId
+        WHERE sale_id = :saleId AND print_status != 'PRINTED'
         """,
     )
     suspend fun updatePrintStatus(saleId: String, status: PrintStatus, error: String?, attemptIncrement: Int): Int

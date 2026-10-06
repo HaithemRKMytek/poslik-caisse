@@ -99,6 +99,18 @@ class RoomSaleRepositoryTest {
     }
 
     @Test
+    fun `a ticket already printed is never re-marked by a second process`() = runTest {
+        val sale = repository.recordSale(listOf(espresso), 0)
+
+        assertTrue(repository.updatePrintStatus(sale.saleId, PrintStatus.PRINTED))
+        // Un ancien processus pas encore tué (force-stop non instantané) qui croit encore le
+        // ticket en attente ne doit jamais pouvoir l'imprimer une seconde fois.
+        assertFalse(repository.updatePrintStatus(sale.saleId, PrintStatus.PRINTED))
+
+        assertEquals(1, repository.getSale(sale.saleId)!!.printAttempts)
+    }
+
+    @Test
     fun `marking synced fails when the sale changed during the push`() = runTest {
         val sale = repository.recordSale(listOf(espresso), 0)
         val candidate = repository.unsyncedSales(limit = 10).single()

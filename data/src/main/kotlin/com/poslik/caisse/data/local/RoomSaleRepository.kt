@@ -58,10 +58,10 @@ class RoomSaleRepository @Inject constructor(private val database: CaisseDatabas
 
     override suspend fun salesToPrint(): List<Sale> = saleDao.salesToPrint().map { it.toDomain() }
 
-    override suspend fun updatePrintStatus(saleId: String, status: PrintStatus, error: String?) {
+    override suspend fun updatePrintStatus(saleId: String, status: PrintStatus, error: String?): Boolean {
         // Un retour en attente (réimpression demandée) n'est pas une tentative d'impression.
         val attemptIncrement = if (status == PrintStatus.PENDING) 0 else 1
-        saleDao.updatePrintStatus(saleId, status, error, attemptIncrement)
+        return saleDao.updatePrintStatus(saleId, status, error, attemptIncrement) == 1
     }
 
     override fun observeUnsyncedCount(): Flow<Int> = saleDao.observeUnsyncedCount()
