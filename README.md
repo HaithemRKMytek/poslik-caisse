@@ -6,7 +6,7 @@ Mini caisse Android (Kotlin, Jetpack Compose) qui encaisse, imprime et garde son
 
 1. Ouvrir le dossier dans Android Studio (JDK 17, SDK 35), placer `google-services.json` dans `app/`, lancer sur une tablette ou un émulateur (Android 8+).
 2. Au premier lancement, créer le compte de l'établissement (email et mot de passe) ou s'y connecter, puis saisir un code caisse (`C01`), qui est réservé dans Firebase. Ces deux étapes demandent le réseau, une seule fois : la session reste ouverte hors ligne.
-3. Tests : `./gradlew test` (domaine, Room via Robolectric, ViewModel) et `./gradlew connectedAndroidTest` (UI Compose).
+3. Tests : `./gradlew test` (domaine, Room via Robolectric, ViewModel) et `./gradlew connectedAndroidTest` (UI Compose). La CI joue aussi un scénario de bout en bout sur émulateur Android contre la Firebase Emulator Suite : ventes en ligne, hors ligne, reconnexion sans doublon, panne imprimante, puis redémarrage et réimpression.
 4. Firebase : `npx -y firebase-tools@latest deploy --only auth,database` active l'authentification email/mot de passe et publie les règles (`firebase.json`, `firebase/database.rules.json`).
 
 Le menu « Panne imprimante (démo) » simule une imprimante en échec. Sans `google-services.json`, l'app saute la connexion et fonctionne entièrement hors ligne.
