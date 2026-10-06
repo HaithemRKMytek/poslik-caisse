@@ -12,9 +12,12 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.poslik.caisse.FirebaseEmulatorRunner
 import com.poslik.caisse.MainActivity
 import com.poslik.caisse.R
@@ -115,8 +118,22 @@ class CaisseEndToEndTest {
         assertEquals(expected, sales.children.map { it.child("saleId").value }.toSet().size)
     }
 
-    private fun remoteSales(): DataSnapshot =
-        Tasks.await(FirebaseDatabase.getInstance().getReference("sales/C01").get(), TIMEOUT_SECONDS, TimeUnit.SECONDS)
+    // Écouteur ponctuel plutôt que get() : get() peut rester bloqué, l'écouteur reçoit l'état serveur.
+    private fun remoteSales(): DataSnapshot {
+        val result = TaskCompletionSource<DataSnapshot>()
+        FirebaseDatabase.getInstance().getReference("sales/C01").addListenerForSingleValueEvent(
+            object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    result.trySetResult(snapshot)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    result.trySetException(error.toException())
+                }
+            },
+        )
+        return Tasks.await(result.task, TIMEOUT_SECONDS, TimeUnit.SECONDS)
+    }
 
     private fun eventually(what: String, assertion: () -> Unit) {
         val deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(SYNC_TIMEOUT_SECONDS)

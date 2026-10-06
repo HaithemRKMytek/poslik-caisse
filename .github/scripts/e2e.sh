@@ -27,4 +27,6 @@ fi
 
 adb pull "/sdcard/Android/data/$APP/files/e2e" "$OUT/captures" || true
 adb logcat -d > "$OUT/logcat.txt" || true
+echo "----- Journal de l'app (synchro, impression, Firebase, plantages) -----"
+grep -E "SyncWorker|FakeTicketPrinter|WM-|Firebase|PersistentConnection|RepoOperation|AndroidRuntime|FATAL" "$OUT/logcat.txt" | tail -150 || true
 exit "$status"
