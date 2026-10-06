@@ -109,7 +109,7 @@ fun PosContent(registerCode: String, state: PosUiState, actions: PosActions) {
                     Switch(
                         checked = state.printerFailureMode,
                         onCheckedChange = actions.onPrinterFailureModeChange,
-                        modifier = Modifier.padding(horizontal = 8.dp),
+                        modifier = Modifier.padding(horizontal = 8.dp).testTag("printer-failure"),
                     )
                     IconButton(onClick = actions.onOpenHistory) {
                         Icon(Icons.AutoMirrored.Filled.List, contentDescription = stringResource(R.string.pos_history))

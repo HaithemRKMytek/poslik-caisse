@@ -75,4 +75,20 @@ class PrintSpoolerTest {
 
         assertTrue(printer.printed.isEmpty())
     }
+
+    @Test
+    fun `every print result asks for a sync so Firebase gets the new state`() = runTest {
+        var syncRequests = 0
+        val spooler = PrintSpooler(printer, repository, backgroundScope, onStatusChanged = { syncRequests++ })
+        val printed = repository.seed(PrintStatus.PENDING)
+        spooler.enqueue(printed.saleId)
+        drainPrintQueue()
+
+        printer.failing = true
+        val failed = repository.seed(PrintStatus.PENDING)
+        spooler.enqueue(failed.saleId)
+        drainPrintQueue()
+
+        assertEquals(2, syncRequests)
+    }
 }

@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "360328783158",
+    "firebase_url": "https://poslik-caisse-android-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "poslik-caisse-android",
+    "storage_bucket": "poslik-caisse-android.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:360328783158:android:c35edf1d72ce4eecd5bf97",
+        "android_client_info": {
+          "package_name": "com.poslik.caisse"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1rJfGfGaoBXlltIJKQYDw4zc3GUYjz0Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

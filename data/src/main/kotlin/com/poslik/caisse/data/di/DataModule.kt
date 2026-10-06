@@ -59,8 +59,12 @@ object DataProvidesModule {
 
     @Provides
     @Singleton
-    fun printSpooler(printer: TicketPrinter, repository: SaleRepository, @ApplicationScope scope: CoroutineScope): PrintSpooler =
-        PrintSpooler(printer, repository, scope)
+    fun printSpooler(
+        printer: TicketPrinter,
+        repository: SaleRepository,
+        syncScheduler: SyncScheduler,
+        @ApplicationScope scope: CoroutineScope,
+    ): PrintSpooler = PrintSpooler(printer, repository, scope, onStatusChanged = syncScheduler::requestSync)
 
     @Provides
     fun clock(): Clock = Clock { System.currentTimeMillis() }
