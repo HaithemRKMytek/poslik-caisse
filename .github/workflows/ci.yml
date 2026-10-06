@@ -100,6 +100,10 @@ jobs:
           disable-animations: true
           script: bash .github/scripts/e2e.sh
 
+      - name: Journal des émulateurs Firebase
+        if: always()
+        run: tail -n 80 firebase-emulators.log database-debug.log 2>/dev/null || true
+
       - name: Captures d'écran et journaux
         if: always()
         uses: actions/upload-artifact@v4

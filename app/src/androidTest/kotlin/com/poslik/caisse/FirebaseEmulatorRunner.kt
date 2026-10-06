@@ -6,6 +6,7 @@ import androidx.test.runner.AndroidJUnitRunner
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.Logger
 
 /**
  * Lanceur de tests instrumentés. Avec l'argument `firebaseEmulator=true`, l'app parle à la Firebase
@@ -24,7 +25,10 @@ class FirebaseEmulatorRunner : AndroidJUnitRunner() {
     override fun callApplicationOnCreate(app: Application) {
         if (useEmulator && FirebaseApp.getApps(app).isNotEmpty()) {
             FirebaseAuth.getInstance().useEmulator(HOST, AUTH_PORT)
-            FirebaseDatabase.getInstance().useEmulator(HOST, DATABASE_PORT)
+            FirebaseDatabase.getInstance().apply {
+                useEmulator(HOST, DATABASE_PORT)
+                setLogLevel(Logger.Level.DEBUG)
+            }
         }
         super.callApplicationOnCreate(app)
     }

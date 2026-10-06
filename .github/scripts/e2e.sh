@@ -12,6 +12,7 @@ mkdir -p "$OUT"
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 adb logcat -c
+echo "Heure hôte : $(date -u '+%F %T')   heure appareil : $(adb shell date -u '+%F %T')"
 
 run_phase() {
   adb shell am instrument -w -e firebaseEmulator true -e class "$CLASS#$1" "$RUNNER" | tee "$OUT/$1.txt"
@@ -28,5 +29,5 @@ fi
 adb pull "/sdcard/Android/data/$APP/files/e2e" "$OUT/captures" || true
 adb logcat -d > "$OUT/logcat.txt" || true
 echo "----- Journal de l'app (synchro, impression, Firebase, plantages) -----"
-grep -E "SyncWorker|FakeTicketPrinter|WM-|Firebase|PersistentConnection|RepoOperation|AndroidRuntime|FATAL" "$OUT/logcat.txt" | tail -150 || true
+grep -E "SyncWorker|FakeTicketPrinter|FirebaseAuth|PersistentConnection|Connection|WebSocket|AuthTokenProvider|AndroidRuntime|FATAL" "$OUT/logcat.txt" | grep -v "WM-" | cut -c1-400 | head -250 || true
 exit "$status"
