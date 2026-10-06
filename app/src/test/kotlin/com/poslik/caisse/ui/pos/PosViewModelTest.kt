@@ -1,6 +1,8 @@
 package com.poslik.caisse.ui.pos
 
 import com.poslik.caisse.data.printing.PrinterSettings
+import com.poslik.caisse.domain.auth.AuthState
+import com.poslik.caisse.domain.fake.FakeAuthRepository
 import com.poslik.caisse.domain.fake.FakePrinter
 import com.poslik.caisse.domain.fake.InMemorySaleRepository
 import com.poslik.caisse.domain.fake.drainPrintQueue
@@ -33,6 +35,7 @@ class PosViewModelTest {
     private val repository = InMemorySaleRepository()
     private val printer = FakePrinter()
     private val online = MutableStateFlow(false)
+    private val auth = FakeAuthRepository(AuthState.SignedIn(uid = "uid-1", email = "caisse@poslik.tn"))
     private var syncRequests = 0
 
     @Before
@@ -47,6 +50,7 @@ class PosViewModelTest {
         val viewModel = PosViewModel(
             checkoutUseCase = checkout,
             printerSettings = PrinterSettings(),
+            authRepository = auth,
             applicationScope = this,
             saleRepository = repository,
             networkStatus = object : NetworkStatus {
@@ -100,5 +104,32 @@ class PosViewModelTest {
         assertFalse(viewModel.state.value.canCheckout)
         assertNull(viewModel.state.value.lastTicket)
         assertTrue(repository.all.isEmpty())
+    }
+
+    @Test
+    fun `sign out is refused while sales are waiting for sync`() = runTest {
+        online.value = true
+        val viewModel = viewModel()
+        viewModel.addProduct(Catalog.products[0])
+        viewModel.checkout()
+        advanceUntilIdle()
+        assertEquals("caisse@poslik.tn", viewModel.state.value.accountEmail)
+
+        viewModel.signOut()
+
+        assertFalse(viewModel.state.value.canSignOut)
+        assertTrue(auth.authState.value is AuthState.SignedIn)
+    }
+
+    @Test
+    fun `sign out is refused offline and allowed online once everything is synced`() = runTest {
+        val viewModel = viewModel()
+
+        viewModel.signOut()
+        assertTrue(auth.authState.value is AuthState.SignedIn)
+
+        online.value = true
+        viewModel.signOut()
+        assertEquals(AuthState.SignedOut, auth.authState.value)
     }
 }

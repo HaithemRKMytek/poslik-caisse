@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Scénario de bout en bout sur émulateur Android, contre les émulateurs Firebase lancés par la CI.
+# Deux lancements de l'instrumentation, donc deux processus : la phase 2 vérifie le redémarrage.
+set -uo pipefail
+
+OUT=e2e
+APP=com.poslik.caisse
+RUNNER="$APP.test/$APP.FirebaseEmulatorRunner"
+CLASS="$APP.e2e.CaisseEndToEndTest"
+mkdir -p "$OUT"
+
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb logcat -c
+# Les émulateurs Firebase de l'hôte, joignables depuis l'appareil sur 127.0.0.1.
+adb reverse tcp:9000 tcp:9000
+adb reverse tcp:9099 tcp:9099
+echo "Heure hôte : $(date -u '+%F %T')   heure appareil : $(adb shell date -u '+%F %T')"
+
+run_phase() {
+  adb shell am instrument -w -e firebaseEmulator true -e class "$CLASS#$1" "$RUNNER" | tee "$OUT/$1.txt"
+  grep -q "OK (1 test)" "$OUT/$1.txt"
+}
+
+status=0
+run_phase phase1_onlineOfflineAndPrinterFailure || status=1
+if [ "$status" -eq 0 ]; then
+  adb shell am force-stop "$APP"
+  run_phase phase2_failedTicketReprintedAtStartup || status=1
+fi
+
+adb pull "/sdcard/Android/data/$APP/files/e2e" "$OUT/captures" || true
+adb logcat -d > "$OUT/logcat.txt" || true
+echo "----- Journal de l'app (synchro, impression, Firebase, plantages) -----"
+grep -E "SyncWorker|FakeTicketPrinter|FirebaseAuth|PersistentConnection|Connection   |WM-WorkerWrapper|WM-Processor|WM-NetworkStateTracker|ConnectivityService.*(CONNECTED|DISCONNECTED)|AndroidRuntime: FATAL" "$OUT/logcat.txt" \
+  | grep -vE "Sending data|received data|Restoring|keepAlive|FrameCount" | cut -c1-300 | tail -n 300 || true
+exit "$status"

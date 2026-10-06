@@ -14,43 +14,58 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.poslik.caisse.domain.auth.AuthRepository
+import com.poslik.caisse.domain.auth.AuthState
 import com.poslik.caisse.domain.model.RegisterCode
 import com.poslik.caisse.domain.repository.RegisterRepository
 import com.poslik.caisse.ui.history.HistoryScreen
+import com.poslik.caisse.ui.login.LoginScreen
 import com.poslik.caisse.ui.pos.PosScreen
 import com.poslik.caisse.ui.setup.SetupScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
-sealed interface RegisterState {
-    data object Loading : RegisterState
+sealed interface RootState {
+    data object Loading : RootState
 
-    data object NotConfigured : RegisterState
+    data object SignIn : RootState
 
-    data class Configured(val code: RegisterCode) : RegisterState
+    data object Setup : RootState
+
+    data class Ready(val code: RegisterCode) : RootState
 }
 
 @HiltViewModel
-class AppViewModel @Inject constructor(registerRepository: RegisterRepository) : ViewModel() {
-    val registerState: StateFlow<RegisterState> = registerRepository.observeRegisterCode()
-        .map { code -> if (code == null) RegisterState.NotConfigured else RegisterState.Configured(code) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), RegisterState.Loading)
+class AppViewModel @Inject constructor(authRepository: AuthRepository, registerRepository: RegisterRepository) : ViewModel() {
+    val rootState: StateFlow<RootState> = combine(authRepository.authState, registerRepository.observeRegisterCode(), ::rootStateOf)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), RootState.Loading)
 }
 
-/** Racine : configuration de la caisse au premier lancement, puis caisse et historique. */
+/**
+ * Connexion d'abord (la réservation du code caisse et la synchro exigent un compte), puis
+ * configuration de la caisse, puis caisse. Sans Firebase, on passe directement à la configuration.
+ */
+internal fun rootStateOf(auth: AuthState, code: RegisterCode?): RootState = when {
+    auth is AuthState.SignedOut -> RootState.SignIn
+    code == null -> RootState.Setup
+    else -> RootState.Ready(code)
+}
+
+/** Racine : connexion, configuration de la caisse au premier lancement, puis caisse et historique. */
 @Composable
 fun CaisseApp(viewModel: AppViewModel = hiltViewModel()) {
-    val state by viewModel.registerState.collectAsStateWithLifecycle()
+    val state by viewModel.rootState.collectAsStateWithLifecycle()
     when (val current = state) {
-        RegisterState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        RootState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
-        RegisterState.NotConfigured -> SetupScreen()
-        is RegisterState.Configured -> MainNavigation(current.code)
+        RootState.SignIn -> LoginScreen()
+        RootState.Setup -> SetupScreen()
+        is RootState.Ready -> MainNavigation(current.code)
     }
 }
 

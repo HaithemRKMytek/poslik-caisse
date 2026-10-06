@@ -17,13 +17,15 @@ import kotlinx.coroutines.withTimeout
  * - [enqueue] ne bloque jamais : l'encaissement rend la main immédiatement.
  * - Un ticket déjà dans la file n'y est pas ajouté une seconde fois (démarrage + réimpression).
  * - L'état est relu en base avant impression : un ticket déjà imprimé n'est jamais réimprimé.
- * - Le résultat (imprimé / échec) est écrit en base, source de vérité de l'historique.
+ * - Le résultat (imprimé / échec) est écrit en base, source de vérité de l'historique, puis
+ *   [onStatusChanged] est appelé pour que Firebase reçoive le nouvel état.
  */
 class PrintSpooler(
     private val printer: TicketPrinter,
     private val repository: SaleRepository,
     scope: CoroutineScope,
     private val printTimeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS,
+    private val onStatusChanged: () -> Unit = {},
 ) {
     private val queue = Channel<String>(Channel.UNLIMITED)
     private val inQueue = ConcurrentHashMap.newKeySet<String>()
@@ -65,6 +67,7 @@ class PrintSpooler(
             PrintResult.Success -> repository.updatePrintStatus(saleId, PrintStatus.PRINTED)
             is PrintResult.Failure -> repository.updatePrintStatus(saleId, PrintStatus.FAILED, result.reason)
         }
+        onStatusChanged()
     }
 
     companion object {

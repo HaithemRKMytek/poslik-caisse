@@ -8,10 +8,12 @@ import com.poslik.caisse.data.local.RoomRegisterRepository
 import com.poslik.caisse.data.local.RoomSaleRepository
 import com.poslik.caisse.data.network.NetworkMonitor
 import com.poslik.caisse.data.printing.FakeTicketPrinter
+import com.poslik.caisse.data.remote.FirebaseAuthRepository
 import com.poslik.caisse.data.remote.FirebaseRegisterDataSource
 import com.poslik.caisse.data.remote.FirebaseSaleDataSource
 import com.poslik.caisse.data.remote.RegisterRemoteDataSource
 import com.poslik.caisse.data.sync.WorkManagerSyncScheduler
+import com.poslik.caisse.domain.auth.AuthRepository
 import com.poslik.caisse.domain.network.NetworkStatus
 import com.poslik.caisse.domain.printing.PrintSpooler
 import com.poslik.caisse.domain.printing.TicketPrinter
@@ -57,8 +59,12 @@ object DataProvidesModule {
 
     @Provides
     @Singleton
-    fun printSpooler(printer: TicketPrinter, repository: SaleRepository, @ApplicationScope scope: CoroutineScope): PrintSpooler =
-        PrintSpooler(printer, repository, scope)
+    fun printSpooler(
+        printer: TicketPrinter,
+        repository: SaleRepository,
+        syncScheduler: SyncScheduler,
+        @ApplicationScope scope: CoroutineScope,
+    ): PrintSpooler = PrintSpooler(printer, repository, scope, onStatusChanged = syncScheduler::requestSync)
 
     @Provides
     fun clock(): Clock = Clock { System.currentTimeMillis() }
@@ -75,6 +81,9 @@ abstract class DataBindsModule {
 
     @Binds
     abstract fun registerRepository(impl: RoomRegisterRepository): RegisterRepository
+
+    @Binds
+    abstract fun authRepository(impl: FirebaseAuthRepository): AuthRepository
 
     @Binds
     abstract fun registerRemote(impl: FirebaseRegisterDataSource): RegisterRemoteDataSource

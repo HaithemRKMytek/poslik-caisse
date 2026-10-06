@@ -18,9 +18,11 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,9 +34,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -66,6 +72,7 @@ fun PosScreen(registerCode: RegisterCode, onOpenHistory: () -> Unit, viewModel: 
             onCheckout = viewModel::checkout,
             onPrinterFailureModeChange = viewModel::setPrinterFailureMode,
             onOpenHistory = onOpenHistory,
+            onSignOut = viewModel::signOut,
         ),
     )
 }
@@ -76,11 +83,23 @@ data class PosActions(
     val onCheckout: () -> Unit = {},
     val onPrinterFailureModeChange: (Boolean) -> Unit = {},
     val onOpenHistory: () -> Unit = {},
+    val onSignOut: () -> Unit = {},
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PosContent(registerCode: String, state: PosUiState, actions: PosActions) {
+    var showSignOut by rememberSaveable { mutableStateOf(false) }
+    if (showSignOut && state.accountEmail != null) {
+        SignOutDialog(
+            state = state,
+            onConfirm = {
+                showSignOut = false
+                actions.onSignOut()
+            },
+            onDismiss = { showSignOut = false },
+        )
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -90,10 +109,15 @@ fun PosContent(registerCode: String, state: PosUiState, actions: PosActions) {
                     Switch(
                         checked = state.printerFailureMode,
                         onCheckedChange = actions.onPrinterFailureModeChange,
-                        modifier = Modifier.padding(horizontal = 8.dp),
+                        modifier = Modifier.padding(horizontal = 8.dp).testTag("printer-failure"),
                     )
                     IconButton(onClick = actions.onOpenHistory) {
                         Icon(Icons.AutoMirrored.Filled.List, contentDescription = stringResource(R.string.pos_history))
+                    }
+                    if (state.accountEmail != null) {
+                        IconButton(onClick = { showSignOut = true }, modifier = Modifier.testTag("sign-out")) {
+                            Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = stringResource(R.string.pos_sign_out))
+                        }
                     }
                 },
             )
@@ -214,6 +238,32 @@ private fun CartLineRow(line: CartLine, actions: PosActions) {
             maxLines = 1,
         )
     }
+}
+
+@Composable
+private fun SignOutDialog(state: PosUiState, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.sign_out_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.sign_out_account, state.accountEmail.orEmpty()))
+                Text(
+                    when {
+                        !state.isOnline -> stringResource(R.string.sign_out_blocked_offline)
+                        state.unsyncedCount > 0 -> stringResource(R.string.sign_out_blocked_pending, state.unsyncedCount)
+                        else -> stringResource(R.string.sign_out_warning)
+                    },
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = state.canSignOut) { Text(stringResource(R.string.sign_out_confirm)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.sign_out_cancel)) }
+        },
+    )
 }
 
 private val WIDE_LAYOUT_MIN_WIDTH = 720.dp

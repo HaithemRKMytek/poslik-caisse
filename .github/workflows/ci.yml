@@ -49,3 +49,66 @@ jobs:
         with:
           name: poslik-caisse-debug
           path: app/build/outputs/apk/debug/*.apk
+
+  e2e:
+    name: Bout en bout (émulateur Android + Firebase Emulator Suite)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      # 17 pour Gradle (dernière version listée = version par défaut), 21 pour les émulateurs Firebase.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            21
+            17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Activer KVM pour l'émulateur
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Build de l'app et des tests instrumentés
+        run: ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest
+
+      - name: Émulateurs Firebase (Auth + Realtime Database, règles du dépôt)
+        run: |
+          export JAVA_HOME="$JAVA_HOME_21_X64" PATH="$JAVA_HOME_21_X64/bin:$PATH"
+          npx -y firebase-tools@latest emulators:start --only auth,database --project poslik-caisse-android > firebase-emulators.log 2>&1 &
+          for i in $(seq 90); do
+            if curl -s localhost:9099 > /dev/null && curl -s localhost:9000 > /dev/null; then echo "Émulateurs prêts"; exit 0; fi
+            sleep 2
+          done
+          cat firebase-emulators.log
+          exit 1
+
+      - name: Scénario en ligne, hors ligne, reconnexion, panne imprimante et redémarrage
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: bash .github/scripts/e2e.sh
+
+      - name: Journal des émulateurs Firebase
+        if: always()
+        run: tail -n 80 firebase-emulators.log database-debug.log 2>/dev/null || true
+
+      - name: Captures d'écran et journaux
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e
+          path: |
+            e2e/
+            firebase-emulators.log
