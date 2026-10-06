@@ -122,7 +122,7 @@ class CaisseEndToEndTest {
      * la vérification ne dépend ni du SDK ni du compte de l'app qu'elle contrôle.
      */
     private fun remoteSales(): JSONObject {
-        val url = URL("http://10.0.2.2:9000/sales/C01.json?ns=$DATABASE_NAMESPACE")
+        val url = URL("http://${FirebaseEmulatorRunner.HOST}:9000/sales/C01.json?ns=$DATABASE_NAMESPACE")
         val connection = (url.openConnection() as HttpURLConnection).apply {
             setRequestProperty("Authorization", "Bearer owner")
             connectTimeout = TIMEOUT_MILLIS

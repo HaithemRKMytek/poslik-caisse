@@ -10,8 +10,11 @@ import com.google.firebase.database.Logger
 
 /**
  * Lanceur de tests instrumentés. Avec l'argument `firebaseEmulator=true`, l'app parle à la Firebase
- * Local Emulator Suite de la machine hôte (10.0.2.2) au lieu du vrai projet : le scénario de bout en
- * bout tourne sur une base vide, avec les vraies règles, sans toucher aux données réelles.
+ * Local Emulator Suite au lieu du vrai projet : le scénario de bout en bout tourne sur une base vide,
+ * avec les vraies règles, sans toucher aux données réelles.
+ *
+ * Les ports sont redirigés vers l'hôte par `adb reverse` (voir `.github/scripts/e2e.sh`) : l'émulateur
+ * Realtime Database annonce l'adresse 127.0.0.1, que le SDK réutilise à chaque reconnexion.
  */
 class FirebaseEmulatorRunner : AndroidJUnitRunner() {
     private var useEmulator = false
@@ -35,7 +38,7 @@ class FirebaseEmulatorRunner : AndroidJUnitRunner() {
 
     companion object {
         const val ARG_EMULATOR = "firebaseEmulator"
-        private const val HOST = "10.0.2.2"
+        const val HOST = "127.0.0.1"
         private const val AUTH_PORT = 9099
         private const val DATABASE_PORT = 9000
     }

@@ -12,6 +12,9 @@ mkdir -p "$OUT"
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 adb logcat -c
+# Les émulateurs Firebase de l'hôte, joignables depuis l'appareil sur 127.0.0.1.
+adb reverse tcp:9000 tcp:9000
+adb reverse tcp:9099 tcp:9099
 echo "Heure hôte : $(date -u '+%F %T')   heure appareil : $(adb shell date -u '+%F %T')"
 
 run_phase() {
