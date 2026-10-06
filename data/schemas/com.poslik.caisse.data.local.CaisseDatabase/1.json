@@ -1,0 +1,209 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "c25bd4d9ed556ba12c2c69f07280c5c3",
+    "entities": [
+      {
+        "tableName": "register_config",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `register_code` TEXT NOT NULL, `last_number` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "registerCode",
+            "columnName": "register_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastNumber",
+            "columnName": "last_number",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "sales",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sale_id` TEXT NOT NULL, `register_code` TEXT NOT NULL, `ticket_number` INTEGER NOT NULL, `total_millimes` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `print_status` TEXT NOT NULL, `print_attempts` INTEGER NOT NULL, `last_print_error` TEXT, `version` INTEGER NOT NULL, `synced_version` INTEGER NOT NULL, `sync_conflict` INTEGER NOT NULL, PRIMARY KEY(`sale_id`))",
+        "fields": [
+          {
+            "fieldPath": "saleId",
+            "columnName": "sale_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "registerCode",
+            "columnName": "register_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ticketNumber",
+            "columnName": "ticket_number",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalMillimes",
+            "columnName": "total_millimes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "printStatus",
+            "columnName": "print_status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "printAttempts",
+            "columnName": "print_attempts",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastPrintError",
+            "columnName": "last_print_error",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "version",
+            "columnName": "version",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncedVersion",
+            "columnName": "synced_version",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncConflict",
+            "columnName": "sync_conflict",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "sale_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_sales_register_code_ticket_number",
+            "unique": true,
+            "columnNames": [
+              "register_code",
+              "ticket_number"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_sales_register_code_ticket_number` ON `${TABLE_NAME}` (`register_code`, `ticket_number`)"
+          },
+          {
+            "name": "index_sales_print_status",
+            "unique": false,
+            "columnNames": [
+              "print_status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_sales_print_status` ON `${TABLE_NAME}` (`print_status`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "sale_lines",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sale_id` TEXT NOT NULL, `product_id` TEXT NOT NULL, `position` INTEGER NOT NULL, `product_name` TEXT NOT NULL, `unit_price_millimes` INTEGER NOT NULL, `quantity` INTEGER NOT NULL, PRIMARY KEY(`sale_id`, `product_id`), FOREIGN KEY(`sale_id`) REFERENCES `sales`(`sale_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "saleId",
+            "columnName": "sale_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "productId",
+            "columnName": "product_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "position",
+            "columnName": "position",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "productName",
+            "columnName": "product_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unitPriceMillimes",
+            "columnName": "unit_price_millimes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quantity",
+            "columnName": "quantity",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "sale_id",
+            "product_id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": [
+          {
+            "table": "sales",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "sale_id"
+            ],
+            "referencedColumns": [
+              "sale_id"
+            ]
+          }
+        ]
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c25bd4d9ed556ba12c2c69f07280c5c3')"
+    ]
+  }
+}
